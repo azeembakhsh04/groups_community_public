@@ -5,101 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Delete Account & Data - Groups Community</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            color: #333;
-        }
-        .container {
-            max-width: 450px;
-            width: 90%;
-            background: #ffffff;
-            padding: 35px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-        h2 {
-            color: #dc3545;
-            margin-top: 0;
-            font-size: 24px;
-        }
-        p {
-            font-size: 14px;
-            color: #6c757d;
-            line-height: 1.6;
-            margin-bottom: 25px;
-        }
-        .input-group {
-            text-align: left;
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #495057;
-        }
-        input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ced4da;
-            border-radius: 6px;
-            box-sizing: border-box;
-            font-size: 15px;
-            transition: border-color 0.2s;
-        }
-        input:focus {
-            outline: none;
-            border-color: #dc3545;
-        }
-        button {
-            width: 100%;
-            background-color: #dc3545;
-            color: white;
-            padding: 14px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: background-color 0.2s;
-        }
-        button:hover {
-            background-color: #bd2130;
-        }
-        button:disabled {
-            background-color: #6c757d;
-            cursor: not-allowed;
-        }
-        .message {
-            margin-top: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            padding: 10px;
-            border-radius: 6px;
-            display: none;
-        }
+        body { font-family: Arial, sans-serif; background-color: #f8f9fa; padding: 20px; text-align: center; }
+        .container { max-width: 450px; margin: 50px auto; background: white; padding: 35px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h2 { color: #dc3545; }
+        p { color: #6c757d; font-size: 14px; }
+        input { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ced4da; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; background-color: #dc3545; color: white; padding: 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        button:disabled { background-color: #6c757d; }
+        .message { margin-top: 20px; padding: 12px; border-radius: 6px; display: none; font-size: 14px; text-align: left; word-break: break-all; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2>Account Deletion Request</h2>
-    <p>Apni User ID (UID) enter karein taake Groups Community app se aap ka account aur saari associated data permanently delete ki ja sake.</p>
+    <p>Apni User ID (UID) enter karein taake Groups Community app se aap ka account permanently delete kiya ja sake.</p>
     
-    <div class="input-group">
-        <label for="uid">Your User ID (UID)</label>
-        <input type="text" id="uid" placeholder="e.g. ABC123xyz..." required>
-    </div>
-    
+    <input type="text" id="uid" placeholder="Enter your User ID (UID)" required>
     <button id="deleteBtn" onclick="requestDeletion()">Delete My Account</button>
     
     <div id="message" class="message"></div>
@@ -111,13 +33,11 @@ function requestDeletion() {
     const messageDiv = document.getElementById('message');
     const btn = document.getElementById('deleteBtn');
     
-    messageDiv.style.display = 'none';
-    
     if(!userId) {
         messageDiv.style.display = 'block';
         messageDiv.style.backgroundColor = '#f8d7da';
         messageDiv.style.color = '#721c24';
-        messageDiv.innerText = 'Please enter a valid User ID.';
+        messageDiv.innerText = 'Error: Please enter a valid User ID.';
         return;
     }
     
@@ -125,36 +45,48 @@ function requestDeletion() {
     messageDiv.style.display = 'block';
     messageDiv.style.backgroundColor = '#fff3cd';
     messageDiv.style.color = '#856404';
-    messageDiv.innerText = 'Processing your request...';
+    messageDiv.innerText = 'Processing request... Waiting for Firebase response...';
     
-    // Aap ka wahi exact verified active Web App Exec URL
+    // Apps Script Web App URL
     const scriptUrl = "https://script.google.com/macros/s/AKfycbzCQAHvJIMoRhcwy41xCpcEeGnzmnF81nK9l1czbHZql8c6VDZWgWBK8i0DdaGzC_ZJlQ/exec";
     
-    // Data ko URL encoded parameters ke format mein bhejna taake content drop na ho
-    const data = new URLSearchParams();
-    data.append('userId', userId);
-
-    fetch(scriptUrl, {
-        method: "POST",
-        mode: "no-cors", 
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: data.toString()
-    })
-    .then(() => {
-        messageDiv.style.backgroundColor = '#d4edda';
-        messageDiv.style.color = '#155724';
-        messageDiv.innerText = 'Request submitted! Your account data has been successfully deleted. [V.1]';
-        document.getElementById('uid').value = '';
+    // JSONP format mein request bhejna taake real response screen par dikhe
+    const callbackName = 'firebaseLogCallback';
+    window[callbackName] = function(response) {
         btn.disabled = false;
-    })
-    .catch(err => {
+        
+        if (response.status === "processed") {
+            // Agar Firebase ne sahi kaam kiya ya error diya, dono surat mein response code dikhega
+            if (response.firebaseCode === 200) {
+                messageDiv.style.backgroundColor = '#d4edda';
+                messageDiv.style.color = '#155724';
+                messageDiv.innerHTML = `<strong>Success!</strong> Backend data received.<br>Firebase Code: ${response.firebaseCode}<br>Database Node Status: Deleted/Cleared.`;
+            } else {
+                messageDiv.style.backgroundColor = '#f8d7da';
+                messageDiv.style.color = '#721c24';
+                messageDiv.innerHTML = `<strong>Firebase Error!</strong> Data received but Firebase blocked it.<br>Status Code: ${response.firebaseCode}<br>Firebase Says: ${response.firebaseResponse || 'Permission Denied/Auth Error'}`;
+            }
+        } else {
+            messageDiv.style.backgroundColor = '#f8d7da';
+            messageDiv.style.color = '#721c24';
+            messageDiv.innerText = 'Script Error: ' + response.message;
+        }
+        
+        // Script tag ko remove karna clear up karne ke liye
+        document.body.removeChild(script);
+        delete window[callbackName];
+    };
+
+    // Script injection dynamic request ke liye
+    const script = document.createElement('script');
+    script.src = `${scriptUrl}?userId=${encodeURIComponent(userId)}&callback=${callbackName}`;
+    script.onerror = function() {
         messageDiv.style.backgroundColor = '#f8d7da';
         messageDiv.style.color = '#721c24';
-        messageDiv.innerText = 'Something went wrong. Please check your internet and try again.';
+        messageDiv.innerText = 'Network Error: Apps Script URL tak request nahi pahonch saki.';
         btn.disabled = false;
-    });
+    };
+    document.body.appendChild(script);
 }
 </script>
 
