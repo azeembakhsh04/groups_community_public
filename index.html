@@ -111,7 +111,6 @@ function requestDeletion() {
     const messageDiv = document.getElementById('message');
     const btn = document.getElementById('deleteBtn');
     
-    // Message reset karne ke liye
     messageDiv.style.display = 'none';
     
     if(!userId) {
@@ -128,20 +127,25 @@ function requestDeletion() {
     messageDiv.style.color = '#856404';
     messageDiv.innerText = 'Processing your request...';
     
+    // Aap ka wahi exact verified active Web App Exec URL
     const scriptUrl = "https://script.google.com/macros/s/AKfycbzCQAHvJIMoRhcwy41xCpcEeGnzmnF81nK9l1czbHZql8c6VDZWgWBK8i0DdaGzC_ZJlQ/exec";
     
+    // Data ko URL encoded parameters ke format mein bhejna taake content drop na ho
+    const data = new URLSearchParams();
+    data.append('userId', userId);
+
     fetch(scriptUrl, {
         method: "POST",
-        mode: "no-cors", // Cross-Origin restriction se bachne ke liye no-cors zaroori hai
+        mode: "no-cors", 
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/x-www-form-urlencoded"
         },
-        body: JSON.stringify({ userId: userId })
+        body: data.toString()
     })
     .then(() => {
         messageDiv.style.backgroundColor = '#d4edda';
         messageDiv.style.color = '#155724';
-        messageDiv.innerText = 'Request submitted! Your account data has been successfully deleted.';
+        messageDiv.innerText = 'Request submitted! Your account data has been successfully deleted. [V.1]';
         document.getElementById('uid').value = '';
         btn.disabled = false;
     })
